@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="mode-normal">
+
+    <div id="app">
+        
+        <!-- 动画转场层 (新增) -->
+        <div id="transitionLayer" class="transition-layer">
+            <!-- 1. 闪光层：用来做一个全屏白光闪烁的效果 -->
+            <div class="flash-overlay"></div>
+            
+            <!-- 2. Logo 容器：用来居中显示那两个闪烁的 Logo -->
+            <div class="logo-silhouette-container">
+                <img src="" id="animLogo1" class="anim-logo">
+                <img src="" id="animLogo2" class="anim-logo">
+            </div>
+
+            <!-- 3. 苦无容器：用来装那两把飞刀 -->
+            <div class="kunai-container">
+                <!-- 左苦无 (全白 + 发光) -->
+                <img src="" id="kunaiLeft" class="kunai kunai-left" alt="Kunai White">
+                <!-- 右苦无 (全黑 + 发光) -->
+                <img src="" id="kunaiRight" class="kunai kunai-right" alt="Kunai Black">
+            </div>
+        </div>
+
+        <!-- 模块2：A面容器 (Professional View) -->
+        <div class="view-normal" id="normalView">
+            <div class="resume-paper">
+                <img src="" alt="Professional Resume" class="resume-img" id="resumeImage">
+                
+                <!-- 模块1：全局控制器 (移至简历下方) -->
+                <div class="switch-wrapper" id="modeSwitch">
+                    <div class="switch-logo-box">
+                        <img src="" alt="Switch Mode" class="logo-img" id="switchLogo">
+                        <div class="logo-glow"></div>
+                    </div>
+                    <div class="switch-slogan" id="switchSlogan"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模块3：B面容器 (Cyberpunk View) -->
+        <div class="view-neon" id="neonView">
+            <!-- 返回按钮 -->
+            <div class="back-btn-container">
+                <button id="backBtn" class="neon-back-btn">
+                    <span class="btn-icon">↩</span> Return to Reality
+                </button>
+            </div>
+
+            <div class="neon-paper">
+                <div class="neon-grid" id="neonGrid">
+                    <!-- 内容将由 JS 动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 动态加载配置 (根据 URL 参数 ?role=Name 切换角色) -->
+    <script>
+        (function() {
+            // 1. 获取 URL 参数中的 role，例如 index.html?role=Mortis
+            const params = new URLSearchParams(window.location.search);
+            // 默认角色设置为 'Doloris'，您可以修改这里的默认值
+            let role = params.get('role') || 'Doloris';
+            
+            // 2. 格式化角色名称（首字母大写，其余小写），防止输入错误
+            // 例如：mortis -> Mortis, DOLORIS -> Doloris
+            if (role) {
+                role = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+            }
+
+            // 3. 动态写入 script 标签
+            // 使用 document.write 确保在 script.js 执行前配置已加载完毕
+            document.write('<script src="config_' + role + '.js"><\/script>');
+            
+            // 4. (可选) 打印当前加载的角色，方便调试
+            console.log(`正在加载角色配置: config_${role}.js`);
+        })();
+    </script>
+    <!-- <script src="config.js"></script> -->
+    <script src="script.js"></script>
+</body>
+</html>

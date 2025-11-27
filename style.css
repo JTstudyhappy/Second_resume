@@ -1,0 +1,553 @@
+/* 全局重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-normal: #ffffff;
+    --bg-neon: #0a0a0a;
+    --text-normal: #333333;
+    --text-neon: #ffffff;
+    --neon-primary: #00ff00; /* 默认值，会被JS覆盖 */
+    --transition-speed: 0.8s;
+}
+
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    overflow-x: hidden;
+    transition: background-color var(--transition-speed) ease;
+}
+
+/* 容器布局 */
+#app {
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* =========================================
+   全局控制器 (Logo Switch) - 新布局
+   ========================================= */
+.switch-wrapper {
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    cursor: pointer;
+    padding: 10px;
+    transition: transform 0.3s ease;
+}
+
+.switch-wrapper:hover {
+    transform: scale(1.05);
+}
+
+.switch-logo-box {
+    position: relative;
+    width: 60px;
+    height: 60px;
+}
+
+.logo-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.logo-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--neon-primary);
+    filter: blur(15px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+
+.switch-wrapper:hover .logo-glow {
+    opacity: 0.6;
+}
+
+.switch-slogan {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #555;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* =========================================
+   A面：专业模式 (Normal Mode)
+   ========================================= */
+.view-normal {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 20px;
+    background-color: var(--bg-normal);
+    transition: opacity 0.5s ease;
+}
+
+.resume-paper {
+    max-width: 800px; /* A4 宽度近似值 */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.resume-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+/* =========================================
+   B面：霓虹模式 (Neon Mode) - A4 规范化
+   ========================================= */
+.view-neon {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+    padding: 40px 20px;
+    background-color: var(--bg-neon); /* 桌面背景 */
+    color: var(--text-neon);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    
+    /* 居中布局 */
+    justify-content: center;
+    align-items: flex-start;
+}
+
+/* 模拟 A4 纸张的容器 */
+.neon-paper {
+    width: 100%;
+    max-width: 210mm; /* A4 标准宽度 */
+    min-height: 297mm; /* A4 标准高度 */
+    /* 保持比例: aspect-ratio: 210/297; (可选，如果内容多会自动撑开) */
+    background-color: #111; /* 纸张背景，比桌面稍浅 */
+    padding: 40px;
+    box-shadow: 0 0 50px rgba(0,0,0,0.8), 0 0 20px var(--neon-primary);
+    position: relative;
+    margin: 0 auto;
+    overflow: hidden; /* 防止光效溢出 */
+}
+
+.neon-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 强制两列 */
+    gap: 20px;
+}
+
+/* =========================================
+   转场动画层 (Transition Layer)
+   ========================================= */
+.transition-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    pointer-events: none;
+    display: none; /* JS 控制显示 */
+}
+
+/* 1. 全黑背景 */
+.transition-layer.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000;
+}
+
+/* 2. 闪光层 */
+.flash-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #fff 0%, var(--neon-primary) 100%);
+    opacity: 0;
+}
+
+.anim-flash .flash-overlay {
+    animation: flashAnim 0.3s ease-out forwards;
+}
+
+@keyframes flashAnim {
+    0% { opacity: 0; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0; }
+}
+
+/* 3. Logo 剪影发光 */
+.logo-silhouette-container {
+    position: absolute;
+    width: 300px; /* 增大尺寸 (原 150px) */
+    height: 300px;
+    opacity: 0;
+}
+
+.anim-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* 关键：将图片转为全白并添加发光 */
+    filter: brightness(0) invert(1) drop-shadow(0 0 15px var(--neon-primary));
+    display: none; /* 默认隐藏 */
+}
+
+/* 状态控制显示哪个 Logo */
+.anim-logo-step1 .logo-silhouette-container #animLogo1 {
+    display: block;
+}
+
+.anim-logo-step2 .logo-silhouette-container #animLogo2 {
+    display: block;
+}
+
+/* 模式 A: Pop (默认) */
+.anim-logo-step1.mode-pop .logo-silhouette-container {
+    animation: logoPop 0.8s ease-out forwards;
+}
+
+.anim-logo-step2.mode-pop .logo-silhouette-container {
+    animation: logoPop 0.8s ease-out forwards;
+}
+
+@keyframes logoPop {
+    0% { transform: scale(0); opacity: 0; }
+    40% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1.15); opacity: 0; }
+}
+
+/* 模式 B: Morph (扭曲变换) */
+/* Logo 1: 出现 -> 扭曲消失 */
+.anim-logo-step1.mode-morph .logo-silhouette-container {
+    animation: logoMorphOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Logo 2: 扭曲出现 -> 正常 */
+.anim-logo-step2.mode-morph .logo-silhouette-container {
+    animation: logoMorphIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes logoMorphOut {
+    0% { 
+        transform: scale(0.5) rotate(0deg); 
+        opacity: 0; 
+        filter: blur(0px) brightness(0) invert(1) drop-shadow(0 0 15px var(--neon-primary));
+    }
+    20% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+        filter: blur(0px) brightness(0) invert(1) drop-shadow(0 0 15px var(--neon-primary));
+    }
+    80% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+        filter: blur(0px) brightness(0) invert(1) drop-shadow(0 0 15px var(--neon-primary));
+    }
+    100% { 
+        transform: scale(0) rotate(180deg); 
+        opacity: 0; 
+        filter: blur(20px) brightness(0) invert(1) drop-shadow(0 0 50px var(--neon-primary));
+    }
+}
+
+@keyframes logoMorphIn {
+    0% { 
+        transform: scale(2) rotate(-180deg); 
+        opacity: 0; 
+        filter: blur(20px) brightness(0) invert(1) drop-shadow(0 0 50px var(--neon-primary));
+    }
+    100% { 
+        transform: scale(1) rotate(0deg); 
+        opacity: 1; 
+        filter: blur(0px) brightness(0) invert(1) drop-shadow(0 0 15px var(--neon-primary));
+    }
+}
+
+/* 4. 苦无动画 */
+.kunai-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 苦无容器下落动画 (模式 B) */
+.kunai-container.anim-drop {
+    animation: kunaiDrop 0.6s cubic-bezier(0.5, 0, 0.8, 0.2) forwards;
+}
+
+@keyframes kunaiDrop {
+    0% { transform: translateY(0); }
+    80% { transform: translateY(-60px); } /* 向上蓄力 */
+    100% { transform: translateY(240vh); } /* 向下冲刺 */
+}
+
+/* 背景闪烁动画 (模式 B) */
+.transition-layer.anim-bg-flash {
+    animation: bgFlash 0.5s ease-out forwards;
+}
+
+@keyframes bgFlash {
+    0% { background-color: #000; }
+    50% { background-color: var(--neon-primary); }
+    100% { background-color: #000; }
+}
+
+.kunai {
+    width: 300px; /* 巨大化 */
+    height: 300px;
+    position: absolute;
+    opacity: 0;
+    object-fit: contain;
+}
+
+/* 左苦无：全白 + 发光 */
+.kunai-left {
+    filter: brightness(0) invert(1) drop-shadow(0 0 5px var(--neon-primary));
+}
+
+/* 右苦无：全黑 + 发光 */
+.kunai-right {
+    filter: brightness(0) drop-shadow(0 0 5px var(--neon-primary));
+}
+
+.anim-kunai .kunai-container {
+    display: flex;
+}
+
+/* 苦无动画序列：出现 -> 移动合并 -> 消失 */
+.anim-kunai .kunai-left {
+    animation: kunaiMoveLeft 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.anim-kunai .kunai-right {
+    animation: kunaiMoveRight 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes kunaiMoveLeft {
+    0% { 
+        transform: translate(-50vw, 0) rotate(-90deg); 
+        opacity: 0; 
+    }
+    20% {
+        transform: translate(-40vw, 0) rotate(-90deg); 
+        opacity: 1;
+    }
+    80% { 
+        transform: translate(0, 0) rotate(0deg); 
+        opacity: 1; 
+    }
+    100% { 
+        transform: translate(0, 0) rotate(0deg); 
+        opacity: 1; 
+    }
+}
+
+@keyframes kunaiMoveRight {
+    0% { 
+        transform: translate(50vw, 0) rotate(90deg); 
+        opacity: 0; 
+    }
+    20% {
+        transform: translate(40vw, 0) rotate(90deg); 
+        opacity: 1;
+    }
+    80% { 
+        transform: translate(0, 0) rotate(0deg); 
+        opacity: 1; 
+    }
+    100% { 
+        transform: translate(0, 0) rotate(0deg); 
+        opacity: 1; 
+    }
+}
+
+/* =========================================
+   返回按钮 (Back Button)
+   ========================================= */
+.back-btn-container {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+}
+
+.neon-back-btn {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--neon-primary);
+    color: var(--neon-primary);
+    padding: 10px 20px;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.neon-back-btn:hover {
+    background: var(--neon-primary);
+    color: #000;
+    box-shadow: 0 0 20px var(--neon-primary);
+}
+
+.btn-icon {
+    font-size: 1.2rem;
+}
+
+/* 霓虹卡片通用样式 */
+.neon-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* 呼吸灯动画类 (JS激活) */
+.neon-active .neon-card {
+    animation: breathe 3s infinite alternate;
+    box-shadow: 0 0 10px var(--neon-primary), inset 0 0 5px rgba(0,0,0,0.5);
+    border-color: var(--neon-primary);
+}
+
+.neon-active .neon-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px var(--neon-primary), inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* 个人信息特有样式 */
+.profile-card {
+    grid-column: 1 / -1; /* 跨越所有列 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid var(--neon-primary);
+    margin-bottom: 20px;
+    object-fit: cover;
+    box-shadow: 0 0 15px var(--neon-primary);
+}
+
+.profile-name {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px var(--neon-primary);
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.profile-title {
+    font-size: 1.2rem;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.neon-tag {
+    padding: 5px 15px;
+    border: 1px solid var(--neon-primary);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: var(--neon-primary);
+    background: rgba(0,0,0,0.3);
+}
+
+.card-title {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: var(--neon-primary);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+}
+
+.card-content {
+    line-height: 1.6;
+    color: #ddd;
+}
+
+/* 动画定义 */
+@keyframes breathe {
+    0% {
+        box-shadow: 0 0 5px var(--neon-primary);
+        border-color: rgba(var(--neon-primary-rgb), 0.5);
+    }
+    100% {
+        box-shadow: 0 0 20px var(--neon-primary);
+        border-color: var(--neon-primary);
+    }
+}
+
+/* 状态切换辅助类 */
+body.mode-neon {
+    background-color: var(--bg-neon);
+}
+
+body.mode-normal {
+    background-color: var(--bg-normal);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.fade-out {
+    opacity: 0;
+}
+
+.fade-in {
+    opacity: 1;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .neon-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-name {
+        font-size: 2rem;
+    }
+}
